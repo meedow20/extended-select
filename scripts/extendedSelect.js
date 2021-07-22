@@ -15,7 +15,9 @@ const classNameConstants = {
     searchSelectContainer: "searchSelectContainer",
     searchSelectContainerTitle: "searchSelectContainerTitle",
     visuallyHidden: "visually-hidden",
-    searchSelectModal: "searchSelectModal"
+    searchSelectModal: "searchSelectModal",
+    optionContainer: "optionContainer",
+    hideOptionIfNotSearched: "hideOptionIfNotSearched"
 }
 
 // Enum
@@ -66,7 +68,7 @@ searchSelectModal.innerHTML = `<div class="searchSelectModalHeader">
                                        </button>
                                    </div>
                                    <div class="searchSelectModalSearch">
-                                       <input type="text" class="searchSelectInput" 
+                                       <input type="text" class="searchSelectInput" oninput="searchSelect()" 
                                        placeholder="Введите код ОКРБ или наименование закупаемой продукции"
                                        >
                                    </div>
@@ -76,13 +78,14 @@ searchSelectModal.innerHTML = `<div class="searchSelectModalHeader">
                                </div>
                                <div class="searchSelectModalFooter">
                                    <button type="button" class="selectApply" onclick="applySelectedOptions()">Применить</button>
-                                   <button type="button" class="selectReset">Очистить</button>
+                                   <button type="button" class="selectReset" onclick="resetSelect()">Очистить</button>
                                </div>`;
 document.body.prepend(searchSelectModal);
 
 // Selectors
 let countOfSelectedOptions = document.getElementById('countOfSelectedOptions');
 let searchSelectModalMain = document.querySelector('.searchSelectModalMain');
+let searchSelectInput = document.querySelector('.searchSelectInput');
 
 // Modification options from HTML and pushing into Modal Form
 document.querySelectorAll('option').forEach((item, index) => {
@@ -108,23 +111,23 @@ document.querySelectorAll('option').forEach((item, index) => {
 searchSelectModalMain.innerHTML = state.options;
 
 // Change counter and style when option is selected or unselected
-document.querySelectorAll('.optionCheckBox').forEach(item => item.addEventListener('click',
+document.querySelectorAll('.optionCheckBox').forEach((item, index) => item.addEventListener('click',
     () => {
-        let optionContainer = document.getElementById('option_'.concat(`${item.id.split('_')[1]}`));
+        let optionContainer = document.getElementById('option_'.concat(`${index}`));
         let optionCheckBox = document.getElementById(`${item.id}`);
 
         optionCheckBox.checked ?
             (
                 state.countOfSelectedOptions += 1,
-                countOfSelectedOptions.innerText = state.countOfSelectedOptions,
-                optionContainer.style = styleConstants.activeOptionBackgroundColor,
-                state.selectedOptions.push(optionContainer.innerText)
+                    countOfSelectedOptions.innerText = state.countOfSelectedOptions,
+                    optionContainer.style = styleConstants.activeOptionBackgroundColor,
+                    state.selectedOptions.push(optionContainer.innerText)
             ) :
             (
                 state.countOfSelectedOptions -= 1,
-                countOfSelectedOptions.innerText = state.countOfSelectedOptions,
-                optionContainer.style.background = styleConstants.none,
-                state.selectedOptions = state.selectedOptions.filter(item => !optionContainer.innerText.includes(item))
+                    countOfSelectedOptions.innerText = state.countOfSelectedOptions,
+                    optionContainer.style.background = styleConstants.none,
+                    state.selectedOptions = state.selectedOptions.filter(item => !optionContainer.innerText.includes(item))
             )
     }));
 
@@ -140,13 +143,56 @@ function applySelectedOptions() {
     state.selectedOptions.length !== 0 ?
         (
             searchSelectContainer.innerHTML = `<span id='searchSelectSpan'>${state.selectedOptions.join(', ')}</span>`,
-            searchSelectContainer.style.borderLeftColor = styleConstants.searchSelectContainerBorderLeftColor,
-            searchSelectContainer.style.borderLeftWidth = styleConstants.searchSelectContainerBorderLeftWidth
+                searchSelectContainer.style.borderLeftColor = styleConstants.searchSelectContainerBorderLeftColor,
+                searchSelectContainer.style.borderLeftWidth = styleConstants.searchSelectContainerBorderLeftWidth
         ) :
         (
             searchSelectContainer.innerHTML = tagConstants.defaultSearchSelectSpan,
-            searchSelectContainer.style.borderLeftColor = styleConstants.default,
-            searchSelectContainer.style.borderLeftWidth = styleConstants.default
+                searchSelectContainer.style.borderLeftColor = styleConstants.default,
+                searchSelectContainer.style.borderLeftWidth = styleConstants.default
         )
     displayMainForm()
+}
+
+function resetSelect() {
+    document.querySelectorAll('.optionCheckBox').forEach(item => item.checked = false);
+    searchSelectInput.value = '';
+    document.querySelectorAll('.optionContainer').forEach(item => {
+        item.style.background = styleConstants.none
+    });
+    document.querySelectorAll('.hideOptionIfNotSearched').forEach(item => {
+        item.className = classNameConstants.optionContainer;
+        item.style.background = styleConstants.none
+    });
+    [state.countOfSelectedOptions, state.selectedOptions, countOfSelectedOptions.innerText] = [0, [], 0]
+}
+
+function searchSelect() {
+    let searchValue = searchSelectInput.value.trim();
+    let options = document.querySelectorAll('option');
+
+    if (searchValue !== '') {
+        options.forEach((item, index) => {
+            let optionContainer = document.getElementById('option_'.concat(`${index}`));
+            if (item.innerText.toLowerCase().search(searchValue.toLowerCase()) === -1) {
+                if (optionContainer === null) {
+                    return;
+                }
+                optionContainer.className = classNameConstants.hideOptionIfNotSearched;
+            } else {
+                if (optionContainer === null) {
+                    return;
+                }
+                optionContainer.className = classNameConstants.optionContainer;
+            }
+        })
+    } else {
+        options.forEach((item, index) => {
+            let optionContainer = document.getElementById('option_'.concat(`${index}`));
+            if (optionContainer === null) {
+                return;
+            }
+            optionContainer.className = classNameConstants.optionContainer;
+        })
+    }
 }

@@ -5,6 +5,10 @@
 .visually-open {
 }
 
+.hideOptionIfNotSearched {
+    display: none;
+}
+
 .searchSelectContainer {
     width: 45em;
     border: 1px solid #d9d9d9;
@@ -184,4 +188,8 @@
 
 .optionCheckBox:checked + .optionCheckBoxLabel:after {
     opacity: 1;
+}
+
+mark {
+    background: #035b77;
 }
