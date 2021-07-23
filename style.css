@@ -189,7 +189,3 @@
 .optionCheckBox:checked + .optionCheckBoxLabel:after {
     opacity: 1;
 }
-
-mark {
-    background: #035b77;
-}
